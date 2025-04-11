@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connect Four</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #f0f4f8, #d9e2ec);
+    }
+
+    #game-container {
+      text-align: center;
+      background-color: #ffffff;
+      padding: 20px 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 36px;
+      color: #003366;
+      margin-bottom: 10px;
+    }
+
+    #board {
+      display: grid;
+      grid-template-columns: repeat(7, 60px);
+      grid-template-rows: repeat(6, 60px);
+      gap: 6px;
+      margin: 20px auto;
+      border: 5px solid #001f3f;
+      background-color: #003366;
+      border-radius: 10px;
+      padding: 5px;
+    }
+
+    .cell {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background-color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .cell:hover {
+      background-color: #ffecb3;
+      transform: scale(1.05);
+    }
+
+    #turn, #move-counter {
+      font-size: 20px;
+      font-weight: bold;
+      color: #003366;
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 10px 25px;
+      font-size: 16px;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Connect Four</h1>
+    <div id="board"></div>
+    <p id="turn">Player 1's Turn (Red)</p>
+    <p id="move-counter">Moves: 0</p>
+    <button id="restart-button">Restart Game</button>
+  </div>
+
+  <script>
+    const columns = 7;
+    const rows = 6;
+    let currentPlayer = 1;
+    let moveCount = 0;
+    let gameBoard = Array(rows).fill().map(() => Array(columns).fill(0));
+
+    const boardElement = document.getElementById('board');
+    const turnElement = document.getElementById('turn');
+    const moveCounterElement = document.getElementById('move-counter');
+    const restartButton = document.getElementById('restart-button');
+
+    function initializeBoard() {
+      gameBoard = Array(rows).fill().map(() => Array(columns).fill(0));
+      moveCount = 0;
+      moveCounterElement.textContent = "Moves: 0";
+      boardElement.innerHTML = '';
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < columns; c++) {
+          const cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.addEventListener('click', handleCellClick);
+          boardElement.appendChild(cell);
+        }
+      }
+    }
+
+    function handleCellClick(event) {
+      const col = event.target.dataset.col;
+      const row = getAvailableRow(col);
+
+      if (row === -1) return;
+
+      gameBoard[row][col] = currentPlayer;
+      const cell = boardElement.children[row * columns + parseInt(col)];
+      cell.style.backgroundColor = currentPlayer === 1 ? 'red' : 'yellow';
+
+      moveCount++;
+      moveCounterElement.textContent = `Moves: ${moveCount}`;
+
+      if (checkWinner(row, col)) {
+        turnElement.textContent = `Player ${currentPlayer} wins!`;
+        disableBoard();
+      } else if (moveCount === columns * rows) {
+        turnElement.textContent = "It's a draw!";
+        disableBoard();
+      } else {
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        turnElement.textContent = `Player ${currentPlayer}'s Turn (${currentPlayer === 1 ? 'Red' : 'Yellow'})`;
+      }
+    }
+
+    function getAvailableRow(col) {
+      for (let r = rows - 1; r >= 0; r--) {
+        if (gameBoard[r][col] == 0) return r;
+      }
+      return -1;
+    }
+
+    function checkWinner(row, col) {
+      return (
+        checkDirection(row, col, 1, 0) ||
+        checkDirection(row, col, 0, 1) ||
+        checkDirection(row, col, 1, 1) ||
+        checkDirection(row, col, 1, -1)
+      );
+    }
+
+    function checkDirection(row, col, dRow, dCol) {
+      let count = 1;
+
+      for (let i = 1; i < 4; i++) {
+        const r = parseInt(row) + i * dRow;
+        const c = parseInt(col) + i * dCol;
+        if (r >= 0 && r < rows && c >= 0 && c < columns && gameBoard[r][c] === currentPlayer) {
+          count++;
+        } else break;
+      }
+
+      for (let i = 1; i < 4; i++) {
+        const r = parseInt(row) - i * dRow;
+        const c = parseInt(col) - i * dCol;
+        if (r >= 0 && r < rows && c >= 0 && c < columns && gameBoard[r][c] === currentPlayer) {
+          count++;
+        } else break;
+      }
+
+      return count >= 4;
+    }
+
+    function disableBoard() {
+      const cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => cell.removeEventListener('click', handleCellClick));
+    }
+
+    restartButton.addEventListener('click', () => {
+      currentPlayer = 1;
+      turnElement.textContent = "Player 1's Turn (Red)";
+      initializeBoard();
+    });
+
+    initializeBoard();
+  </script>
+</body>
+</html>
